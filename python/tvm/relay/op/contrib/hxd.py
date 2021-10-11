@@ -14,14 +14,29 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# pylint: disable=wildcard-import
-"""Contrib modules."""
-from .register import get_pattern_table, register_pattern_table
+# pylint: disable=invalid-name, unused-argument
+import tvm.ir
+from tvm.relay import transform
 
-from .arm_compute_lib import *
-from .dnnl import *
-from .bnns import *
-from .coreml import *
-from .ethosn import *
-from .tensorrt import *
-from .hxd import *
+
+def _register_external_op_helper(op_name, supported=True):
+    @tvm.ir.register_op_attr(op_name, "target.hxd")
+    def _func_wrapper(expr):
+        return supported
+
+    return _func_wrapper
+
+
+_register_external_op_helper("add")
+
+
+def partition_for_hxd(mod, params=None, **opts):
+    seq = tvm.transform.Sequential(
+        [
+            transform.InferType(),
+            transform.AnnotateTarget("hxd"),
+            transform.MergeCompilerRegions(),
+            transform.PartitionGraph(),
+        ]
+    )
+    return seq(mod)

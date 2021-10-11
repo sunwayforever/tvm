@@ -14,14 +14,10 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# pylint: disable=wildcard-import
-"""Contrib modules."""
-from .register import get_pattern_table, register_pattern_table
 
-from .arm_compute_lib import *
-from .dnnl import *
-from .bnns import *
-from .coreml import *
-from .ethosn import *
-from .tensorrt import *
-from .hxd import *
+file(GLOB HXD_RELAY_CONTRIB_SRC src/relay/backend/contrib/hxd/*.cc)
+list(APPEND COMPILER_SRCS ${HXD_RELAY_CONTRIB_SRC})
+
+# file(GLOB HXD_CONTRIB_SRC src/runtime/contrib/hxd/hxd.cc)
+# list(APPEND RUNTIME_SRCS ${HXD_CONTRIB_SRC})
+message(STATUS "Build with HXD module")
