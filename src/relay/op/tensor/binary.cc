@@ -44,6 +44,11 @@ RELAY_REGISTER_BINARY_OP("add")
     .set_support_level(1)
     .set_attr<FTVMCompute>("FTVMCompute", RELAY_BINARY_COMPUTE(topi::add));
 
+RELAY_REGISTER_BINARY_OP("my_add")
+    .describe("Elementwise add with broadcasting")
+    .set_support_level(1);
+    // .set_attr<FTVMCompute>("FTVMCompute", RELAY_BINARY_COMPUTE(topi::add));
+
 // Subtraction
 RELAY_REGISTER_BINARY_OP("subtract")
     .describe("Elementwise substract with broadcasting")

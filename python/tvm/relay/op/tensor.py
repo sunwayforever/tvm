@@ -529,6 +529,9 @@ def add(lhs, rhs):
     """
     return _make.add(lhs, rhs)
 
+def my_add(lhs, rhs):
+    return _make.my_add(lhs, rhs)
+
 
 def subtract(lhs, rhs):
     """Subtraction with numpy-style broadcasting.

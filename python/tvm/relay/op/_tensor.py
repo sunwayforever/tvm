@@ -17,14 +17,20 @@
 # pylint: disable=invalid-name, unused-argument, len-as-condition
 """Backend compiler related feature registration"""
 
+import tvm
+
 from tvm.te.hybrid import script
-from tvm import topi
+from tvm import topi, te
 from tvm.runtime import convert
+from tvm.relay.op import strategy as _strategy
+from tvm.relay.op.op import OpStrategy
+from tvm.target import generic_func, override_native_generic_func
 
 from .op import register_compute, register_shape_func
-from .op import register_broadcast_schedule, register_injective_schedule
+from .op import register_broadcast_schedule, register_injective_schedule, register_schedule, register_compute, register_strategy
 from .op import register_pattern, OpPattern
 
+import numpy as np
 
 register_broadcast_schedule("log")
 register_broadcast_schedule("log2")
@@ -93,7 +99,39 @@ register_broadcast_schedule("fast_erf")
 # this will not be used in actual computation
 register_injective_schedule("on_device")
 
+@override_native_generic_func("my_add_strategy")
+def my_add_strategy(attrs, inputs, out_type, target):
+    strategy = OpStrategy()
+    strategy.add_implementation(
+        my_add_compute,
+        _strategy.wrap_topi_schedule(topi.generic.schedule_extern),
+        name="my_add",
+    )
+    return strategy
 
+def my_add_compute(attrs, inputs, output_type):
+    lhs, rhs = inputs
+    def gen_ir(A, B, C):
+        ib = tvm.tir.ir_builder.create()
+        ap = ib.buffer_ptr(A)
+        bp = ib.buffer_ptr(B)
+        cp = ib.buffer_ptr(C)
+        with ib.for_range(0, np.prod(lhs.shape)) as i:
+            cp[i] = ap[i] + bp[i]
+        return ib.get()
+
+    C = tvm.tir.decl_buffer(lhs.shape, output_type.dtype, "out_buf")
+    return [te.extern(
+        [lhs.shape],
+        inputs,
+        lambda ins, outs: gen_ir(ins[0], ins[1], outs[0]),
+        dtype=output_type.dtype,
+        out_buffers=[C],
+        name="my_add",
+        tag="my_add",
+    )]
+
+register_strategy("my_add", my_add_strategy)
 # zeros
 @register_compute("zeros")
 def zeros_compute(attrs, inputs, output_type):
