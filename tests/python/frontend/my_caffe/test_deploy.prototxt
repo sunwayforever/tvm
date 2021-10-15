@@ -1,0 +1,97 @@
+name: "test"
+
+layer {
+ name: "data"
+ type: "Input"
+ top: "data"
+ include {
+   phase: TEST
+ }      
+ input_param {
+   shape {
+     dim: 1
+     dim: 1
+   }
+ }
+}
+
+# layer {
+#   name: "input"
+#   type: "Python"
+#   top: "data"
+#   top: "label"
+#   python_param {
+#     module: "test_data"
+#     layer: "TestDataLayer"
+#   }
+# }
+
+layer {
+  name: "encode1"
+  type: "InnerProduct"
+  bottom: "data"
+  top: "encode1"
+  inner_product_param {
+    num_output: 100
+    weight_filler {
+      type: "xavier"
+      variance_norm: AVERAGE
+    }    
+  }
+}
+layer {
+  name: "encode1neuron"
+  type: "ReLU"
+  bottom: "encode1"
+  top: "encode1neuron"
+}
+
+layer {
+  name: "decode1"
+  type: "InnerProduct"
+  bottom: "encode1neuron"
+  top: "decode1"
+
+  inner_product_param {
+    num_output: 1
+    weight_filler {
+      type: "xavier"
+      variance_norm: AVERAGE
+    }        
+  }
+}
+
+# layer {
+#   name: "loss"
+#   type: "EuclideanLoss"      
+#   bottom: "decode1"
+#   bottom: "label"
+#   top: "l2_error"
+#   loss_weight: 1
+#   include {
+#     phase: TRAIN
+#   }      
+# }
+
+# layer {
+#   name: "threshold"
+#   type: "Threshold"      
+#   bottom: "decode1"
+#   top: "threshold"
+#   threshold_param {
+#     threshold:0.5
+#   }
+#   include {
+#     phase: TEST
+#   }      
+# }
+
+layer {
+  name: "threshold"
+  type: "Threshold"      
+  bottom: "decode1"
+  top: "threshold"
+  threshold_param {
+    threshold:0.5
+  }
+}

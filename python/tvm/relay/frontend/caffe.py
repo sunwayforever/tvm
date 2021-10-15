@@ -63,6 +63,7 @@ class OperatorConverter(object):
             "Slice": self.convert_slice,
             "Softmax": self.convert_softmax,
             "TanH": self.convert_tanh,
+            "Threshold": self.convert_threshold,
         }
 
     def convert_flatten(self, op):
@@ -557,6 +558,15 @@ class OperatorConverter(object):
         in_expr = self.exp_tab.get_expr(inputs[0])
         out = _op.tanh(in_expr)
         return out
+
+    def convert_threshold(self, op):
+        inputs = op.bottom
+        in_expr = self.exp_tab.get_expr(inputs[0])
+
+        threshold = getattr(op.threshold_param, "threshold", 0)
+        greater = _op.greater(in_expr, self.exp_tab.new_const(np.asarray(threshold, np.float32)))
+        # return _op.cast(greater, "float32")
+        return _op.transform.where(greater, _op.ones_like(in_expr), _op.zeros_like(in_expr))
 
     def convert_crop(self, op):
         """Convert Crop layer"""
